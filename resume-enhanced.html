@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简历编辑器 Pro</title>
+<link rel="manifest" id="manifestLink">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Noto+Serif+SC:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&family=ZCOOL+XiaoWei&family=Lora:ital,wght@0,400;0,600;1,400&family=Source+Serif+4:wght@300;400;600&family=EB+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<style>
+:root{
+  --accent:#2c6e8a;--accent-light:#e8f4f8;--accent-mid:#5a9cb5;
+  --text-dark:#1a1a2e;--text-mid:#4a4a6a;--text-light:#8888aa;
+  --border:#dde4ee;--bg:#eef1f6;--white:#fff;
+  --shadow:0 8px 40px rgba(44,110,138,.12);--panel:244px;
+  --resume-lh:1.78;--resume-ls:0em;--resume-pad:1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Serif SC',serif;background:var(--bg);color:var(--text-dark);min-height:100vh}
+.panel{position:fixed;top:0;left:0;bottom:0;width:var(--panel);background:#fff;border-right:1px solid var(--border);box-shadow:2px 0 20px rgba(0,0,0,.06);display:flex;flex-direction:column;z-index:200;overflow:hidden}
+.panel-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-logo{font-family:'Playfair Display',serif;font-size:13.5px;font-weight:700;color:var(--accent);letter-spacing:.05em}
+.panel-logo span{font-size:10px;font-weight:400;color:var(--text-light);display:block;margin-top:2px}
+.panel-body{flex:1;overflow-y:auto;padding:8px 0 24px}
+.panel-body::-webkit-scrollbar{width:3px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.pg{padding:12px 14px;border-bottom:1px solid var(--border)}
+.pg:last-child{border-bottom:none}
+.pg-title{font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--text-light);margin-bottom:9px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;border:1.5px solid var(--border);background:#fff;color:var(--text-mid);font-family:inherit;font-size:11.5px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+.btn-full{width:100%;justify-content:center;padding:7px}
+.color-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.preset-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform .14s,border-color .14s;flex-shrink:0}
+.preset-dot:hover{transform:scale(1.2)}
+.preset-dot.selected{border-color:#1a1a2e}
+#colorPicker{width:28px;height:28px;border:2px solid var(--border);border-radius:50%;cursor:pointer;padding:0;background:none;outline:none;overflow:hidden;flex-shrink:0}
+#colorPicker::-webkit-color-swatch-wrapper{padding:0;border-radius:50%}
+#colorPicker::-webkit-color-swatch{border:none;border-radius:50%}
+.styled-select{width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;color:var(--text-mid);background:#fff;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238888aa' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.styled-select:hover,.styled-select:focus{border-color:var(--accent)}
+.slider-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.slider-row label{font-size:11px;color:var(--text-mid);width:52px;flex-shrink:0}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent);height:4px;cursor:pointer}
+.slider-row span{font-size:10.5px;color:var(--text-light);width:36px;text-align:right;flex-shrink:0}
+.avatar-panel-wrap{display:flex;flex-direction:column;gap:8px}
+.avatar-top{display:flex;align-items:center;gap:10px}
+.avatar-preview{width:64px;height:64px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:var(--text-light);transition:border-color .16s;background-size:cover;background-position:center;background-repeat:no-repeat;flex-shrink:0;overflow:hidden}
+.avatar-preview:hover{border-color:var(--accent);color:var(--accent)}
+.avatar-preview.has-img{border-style:solid;border-color:var(--accent)}
+.undo-bar{display:flex;gap:6px;align-items:center}
+.undo-count{font-size:10.5px;color:var(--text-light);margin-left:auto}
+.draft-status{font-size:10.5px;color:var(--text-light);margin-top:5px;min-height:14px}
+.draft-status.saved{color:#27ae60}
+.canvas{margin-left:var(--panel);padding:32px 28px 80px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh}
+.canvas-inner{position:relative;width:100%;max-width:820px;display:flex;justify-content:center}
+.page-break-overlay{position:absolute;top:0;left:0;right:0;pointer-events:none;z-index:10}
+.page-break-line{position:absolute;left:0;right:0;border-top:2px dashed rgba(255,80,80,.45);display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.page-break-label{font-size:9px;color:rgba(255,80,80,.7);background:rgba(255,255,255,.9);padding:1px 5px;border-radius:4px;font-family:'Inter',sans-serif;white-space:nowrap}
+.resume{background:var(--white);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;width:100%;transition:all .35s cubic-bezier(.4,0,.2,1)}
+.resume.portrait{max-width:780px;display:grid;grid-template-columns:252px 1fr}
+.resume.portrait .sidebar{background:var(--accent);color:#fff;padding:calc(44px * var(--resume-pad)) calc(26px * var(--resume-pad));display:flex;flex-direction:column;gap:calc(28px * var(--resume-pad));grid-row:1/99}
+.resume.portrait .main{padding:calc(44px * var(--resume-pad)) calc(40px * var(--resume-pad));display:flex;flex-direction:column;gap:calc(28px * var(--resume-pad))}
+.resume.landscape{max-width:1080px;display:flex;flex-direction:column}
+.resume.landscape .header-band{display:flex;align-items:center;background:var(--accent);padding:38px 52px;gap:32px;color:#fff}
+.resume.landscape .body-grid{display:grid;grid-template-columns:1fr 1.65fr}
+.resume.landscape .sidebar{padding:calc(32px * var(--resume-pad));border-right:1.5px solid var(--border);display:flex;flex-direction:column;gap:calc(26px * var(--resume-pad))}
+.resume.landscape .main{padding:calc(32px * var(--resume-pad)) calc(42px * var(--resume-pad));display:flex;flex-direction:column;gap:calc(26px * var(--resume-pad))}
+.avatar-wrap{position:relative;display:flex;justify-content:center;margin-bottom:4px}
+.resume.landscape .avatar-wrap{margin-bottom:0;flex-shrink:0}
+.avatar-ring{width:108px;height:108px;border-radius:50%;border:3px solid rgba(255,255,255,.5);cursor:pointer;transition:border-color .2s,border-radius .25s;background-size:cover;background-position:center;background-repeat:no-repeat}
+.resume.landscape .avatar-ring{width:96px;height:96px}
+.avatar-ring:hover{border-color:rgba(255,255,255,.9)}
+.avatar-edit-btn{position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.name-block{text-align:center}
+.resume.landscape .name-block{text-align:left;flex:1}
+.name-block .name{font-family:'Playfair Display',serif;font-size:27px;font-weight:700;line-height:1.2;letter-spacing:.02em;color:#fff}
+.name-block .role{font-size:12.5px;font-weight:300;letter-spacing:.13em;text-transform:uppercase;margin-top:6px;opacity:.85;color:#fff}
+.name-block .tagline{font-size:12px;margin-top:9px;opacity:.72;font-style:italic;line-height:1.65;max-width:320px;color:#fff}
+.resume.portrait .name-block .tagline{margin-left:auto;margin-right:auto}
+.section{display:flex;flex-direction:column;gap:12px;position:relative}
+.section-title-row{display:flex;align-items:center;gap:5px}
+.section-title{font-family:'Playfair Display',serif;font-size:11.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;display:flex;align-items:center;gap:10px;cursor:text;flex:1}
+.resume.portrait .sidebar .section-title{color:rgba(255,255,255,.6)}
+.resume.portrait .sidebar .section-title::after,.resume.landscape .sidebar .section-title::after{content:'';flex:1;height:1px;background:currentColor;opacity:.22}
+.resume.portrait .main .section-title,.resume.landscape .main .section-title{color:var(--accent)}
+.resume.portrait .main .section-title::after,.resume.landscape .main .section-title::after{content:'';flex:1;height:1.5px;background:var(--accent);opacity:.18}
+.section-del-btn{display:none;background:none;border:none;color:rgba(200,50,50,.6);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0}
+.section:hover .section-del-btn{display:inline-block}
+.section-del-btn:hover{color:#c43232}
+.resume.portrait .sidebar .section:hover .section-del-btn{color:rgba(255,180,180,.8)}
+.drag-handle{display:none;cursor:grab;padding:2px 4px;color:rgba(0,0,0,.2);flex-shrink:0;line-height:1;font-size:14px;user-select:none}
+.section:hover .drag-handle{display:block}
+.resume.portrait .sidebar .drag-handle{color:rgba(255,255,255,.35)}
+.sortable-ghost{opacity:.4;background:var(--accent-light)!important}
+.contact-list{display:flex;flex-direction:column;gap:9px}
+.contact-item{display:flex;align-items:center;gap:9px;font-size:12px;line-height:var(--resume-lh);position:relative}
+.resume.portrait .sidebar .contact-item{color:rgba(255,255,255,.88)}
+.ci-icon{width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:background .15s}
+.ci-icon:hover{background:rgba(255,255,255,.32)}
+.resume.landscape .sidebar .contact-item .ci-icon{background:var(--accent-light);color:var(--accent)}
+.resume.landscape .sidebar .contact-item .ci-icon:hover{background:var(--accent);color:#fff}
+.resume.landscape .sidebar .contact-item{color:var(--text-mid)}
+.ci-del{display:none;background:none;border:none;color:rgba(200,50,50,.65);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;margin-left:auto;flex-shrink:0}
+.resume.portrait .sidebar .ci-del{color:rgba(255,160,160,.8)}
+.contact-item:hover .ci-del{display:inline-block}
+.ci-del:hover{color:#c43232}
+.ci-add-btns{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.ci-add-btns .add-btn{padding:3px 8px;font-size:10.5px}
+.icon-picker{position:fixed;z-index:600;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.2);padding:10px;display:none;flex-wrap:wrap;gap:6px;width:220px;border:1px solid var(--border)}
+.icon-picker.show{display:flex}
+.icon-opt{width:32px;height:32px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--border);background:#fff;color:var(--text-mid);transition:all .14s}
+.icon-opt:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.skill-item{display:flex;flex-direction:column;gap:5px}
+.skill-header{display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:var(--resume-ls)}
+.skill-header-right{display:flex;align-items:center;gap:3px}
+.resume.portrait .sidebar .skill-header{color:rgba(255,255,255,.9)}
+.resume.landscape .sidebar .skill-header{color:var(--text-mid)}
+.skill-bar{height:4.5px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden}
+.resume.landscape .sidebar .skill-bar{background:var(--border)}
+.skill-fill{height:100%;border-radius:99px;background:rgba(255,255,255,.85);transition:width .7s cubic-bezier(.4,0,.2,1)}
+.resume.landscape .sidebar .skill-fill{background:var(--accent)}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tag{font-size:11px;padding:4px 10px;border-radius:99px;letter-spacing:.03em;display:inline-flex;align-items:center;gap:4px}
+.resume.portrait .sidebar .tag{background:rgba(255,255,255,.18);color:rgba(255,255,255,.9)}
+.resume.landscape .sidebar .tag{background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid)}
+.tag-del{background:none;border:none;cursor:pointer;line-height:1;padding:0;font-size:13px;opacity:.55;flex-shrink:0;color:inherit}
+.tag-del:hover{opacity:1}
+.timeline{display:flex;flex-direction:column;gap:20px}
+.tl-entry{display:flex;gap:14px;position:relative}
+.tl-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);border:2.5px solid var(--accent-light);margin-top:5px;flex-shrink:0;position:relative;z-index:1}
+.tl-line{flex:1;width:1.5px;background:var(--border);margin-top:4px;min-height:12px}
+.tl-entry:last-child .tl-line{display:none}
+.tl-content{flex:1;min-width:0;position:relative}
+.tl-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.tl-title{font-size:14px;font-weight:600;color:var(--text-dark)}
+.tl-company{font-size:12px;color:var(--accent);margin-top:3px;font-weight:500}
+.tl-date{font-size:11px;color:var(--text-light);background:var(--accent-light);padding:3px 9px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.tl-desc{font-size:12.5px;color:var(--text-mid);line-height:var(--resume-lh);margin-top:7px;letter-spacing:var(--resume-ls)}
+.tl-desc li{margin-left:16px;margin-top:3px}
+.tl-del{position:absolute;top:0;right:0;width:20px;height:20px;border-radius:50%;border:none;background:rgba(200,50,50,.08);color:#c43232;font-size:14px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;transition:background .15s}
+.tl-entry:hover .tl-del{display:flex}
+.tl-del:hover{background:rgba(200,50,50,.2)}
+.profile-text{font-size:13px;line-height:var(--resume-lh);color:var(--text-mid);border-left:3px solid var(--accent);padding-left:14px;letter-spacing:var(--resume-ls)}
+.code-block-wrap{border-radius:8px;overflow:hidden;margin-top:4px}
+.code-block-wrap .lang-select{width:100%;padding:5px 8px;background:#1d1f21;border:none;color:#aaa;font-family:'Inter',monospace;font-size:11px;outline:none;cursor:pointer;border-bottom:1px solid #333}
+.code-block-wrap pre{margin:0!important;border-radius:0!important;max-height:200px;overflow-y:auto}
+.code-block-wrap code{font-size:11.5px!important}
+.add-row{display:flex;justify-content:center;margin-top:6px}
+.add-btn{display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;border:1.5px dashed var(--border);background:transparent;font-family:inherit;font-size:11px;cursor:pointer;transition:all .18s;color:var(--text-light)}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.resume.portrait .sidebar .add-btn{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.5)}
+.resume.portrait .sidebar .add-btn:hover{border-color:rgba(255,255,255,.8);color:#fff;background:rgba(255,255,255,.12)}
+.skill-del{display:none;background:none;border:none;color:rgba(200,50,50,.7);font-size:14px;cursor:pointer;line-height:1;padding:0 1px;flex-shrink:0}
+.skill-item:hover .skill-del{display:inline-block}
+[contenteditable]{outline:none;transition:background .15s;border-radius:3px}
+[contenteditable]:hover{background:rgba(44,110,138,.05)}
+[contenteditable]:focus{background:rgba(44,110,138,.09);box-shadow:0 0 0 2px rgba(44,110,138,.15)}
+.resume.portrait .sidebar [contenteditable]:hover,.resume.portrait .sidebar [contenteditable]:focus{background:rgba(255,255,255,.12);box-shadow:none}
+.modal-bg{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.42);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.22);font-family:inherit;overflow:hidden;max-width:92vw;max-height:90vh;display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-head h3{font-size:14px;font-weight:600;color:var(--text-dark)}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-light);padding:0 4px;line-height:1}
+.modal-close:hover{color:var(--text-dark)}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.field-row{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.field-row label{font-size:11.5px;color:var(--text-mid);width:34px;flex-shrink:0}
+.field-row input{flex:1;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;outline:none}
+.field-row input:focus{border-color:var(--accent)}
+.field-row span{font-size:11.5px;color:var(--text-light)}
+#cropModal .modal{width:420px}
+.crop-container{width:380px;height:290px;overflow:hidden;position:relative;background:#1a1a2e;border-radius:10px;cursor:grab;user-select:none}
+.crop-container:active{cursor:grabbing}
+.crop-img{position:absolute;transform-origin:0 0;image-rendering:high-quality}
+.crop-mask{position:absolute;inset:0;pointer-events:none}
+.crop-hint{font-size:11px;color:var(--text-light);text-align:center;margin-top:7px}
+.crop-zoom-row{display:flex;align-items:center;gap:9px;margin-top:10px}
+.crop-zoom-row span{font-size:11px;color:var(--text-mid)}
+.crop-zoom-row input[type=range]{flex:1;accent-color:var(--accent)}
+#addBlockModal .modal{width:480px}
+.block-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.block-type-card{padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;background:#fff;font-family:inherit;width:100%}
+.block-type-card:hover,.block-type-card.selected{border-color:var(--accent);background:var(--accent-light)}
+.block-type-card .btc-icon{font-size:15px;margin-bottom:4px}
+.block-type-card .btc-name{font-size:12px;font-weight:600;color:var(--text-dark)}
+.block-type-card.selected .btc-name,.block-type-card:hover .btc-name{color:var(--accent)}
+.block-type-card .btc-desc{font-size:10px;color:var(--text-light);margin-top:1px}
+.block-target-row{display:flex;gap:7px;margin-top:12px}
+.block-target-btn{flex:1;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:11.5px;cursor:pointer;background:#fff;color:var(--text-mid);transition:all .15s}
+.block-target-btn.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+#jsonModal .modal{width:560px}
+.json-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px}
+.json-tab{padding:7px 16px;font-size:12px;cursor:pointer;border-bottom:2.5px solid transparent;color:var(--text-light);transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.json-tab.active{border-bottom-color:var(--accent);color:var(--accent);font-weight:600}
+.json-textarea{width:100%;height:200px;font-family:'Inter',monospace;font-size:11.5px;padding:10px;border:1.5px solid var(--border);border-radius:8px;outline:none;resize:vertical;color:var(--text-dark);line-height:1.6}
+.json-textarea:focus{border-color:var(--accent)}
+#pdfOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.48);backdrop-filter:blur(4px);align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#fff;font-family:inherit;font-size:14px}
+#pdfOverlay.show{display:flex}
+.pdf-spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#draftBanner{display:none;position:fixed;bottom:20px;left:calc(var(--panel) + 20px);z-index:300;background:var(--text-dark);color:#fff;border-radius:12px;padding:11px 16px;font-size:12.5px;gap:12px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,.25)}
+#draftBanner.show{display:flex}
+#draftBanner button{padding:4px 11px;border-radius:7px;border:none;font-family:inherit;font-size:11.5px;cursor:pointer}
+#draftBanner .db-yes{background:var(--accent);color:#fff}
+#draftBanner .db-no{background:rgba(255,255,255,.15);color:#fff}
+@media(max-width:700px){:root{--panel:0px}.panel{transform:translateX(-100%)}.canvas{margin-left:0;padding:14px}}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-logo">✦ 简历编辑器 Pro<span>点击任意内容直接编辑</span></div>
+  </div>
+  <div class="panel-body">
+
+    <div class="pg">
+      <div class="pg-title">语言模板</div>
+      <select class="styled-select" id="langSelect" onchange="applyTemplate(this.value)">
+        <option value="zh">🇨🇳 中文</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="ja">🇯🇵 日本語</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="ko">🇰🇷 한국어</option>
+      </select>
+      <div style="font-size:10px;color:var(--text-light);margin-top:5px;line-height:1.4">仅更新区块标题，不覆盖已编辑内容</div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">布局</div>
+      <div class="btn-row">
+        <button class="btn active" id="btnPortrait" onclick="setLayout('portrait')">
+          <svg width="10" height="13" viewBox="0 0 10 13" fill="none"><rect x=".5" y=".5" width="9" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>竖版
+        </button>
+        <button class="btn" id="btnLandscape" onclick="setLayout('landscape')">
+          <svg width="13" height="10" viewBox="0 0 13 10" fill="none"><rect x=".5" y=".5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>横版
+        </button>
+        <button class="btn" id="btnPageBreak" onclick="togglePageBreak()" title="A4分页提示线">📏</button>
+      </div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">历史</div>
+      <div class="undo-bar">
+        <button class="btn" id="btnUndo" onclick="undo()" title="Ctrl+Z" disabled>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6A4.5 4.5 0 1 1 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M1.5 2.5v3.5h3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>撤销
+        </button>
+        <button class="btn" id="btnRedo" onclick="redo()" title="Ctrl+Y" disabled>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M10.5 6A4.5 4.5 0 1 0 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10.5 2.5v3.5H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>重做
+        </button>
+        <span class="undo-count" id="undoCount"></span>
+      </div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">主题色</div>
+      <div class="color-row" id="presets"></div>
+      <div style="margin-top:7px;display:flex;align-items:center;gap:7px">
+        <input type="color" id="colorPicker" value="#2c6e8a">
+        <span style="font-size:10.5px;color:var(--text-light)" id="colorHex">#2c6e8a</span>
+      </div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">字体</div>
+      <select class="styled-select" id="fontSelect" onchange="setFont(this.value)">
+        <optgroup label="中文字体">
+          <option value="serif-cn">思源宋体 — 典雅正式</option>
+          <option value="sans-cn">思源黑体 — 简洁现代</option>
+          <option value="xiaowei">小薇体 — 精致优雅</option>
+        </optgroup>
+        <optgroup label="国际字体">
+          <option value="source-serif">Source Serif 4 — 专业衬线</option>
+          <option value="lora">Lora — 现代文学风</option>
+          <option value="garamond">EB Garamond — 古典学术</option>
+          <option value="inter">Inter — 极简无衬线</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">排版微调</div>
+      <div class="slider-row"><label>行间距</label><input type="range" id="slLH" min="130" max="220" value="178" oninput="setTypo()"><span id="lblLH">1.78</span></div>
+      <div class="slider-row"><label>字间距</label><input type="range" id="slLS" min="-20" max="80" value="0" oninput="setTypo()"><span id="lblLS">0em</span></div>
+      <div class="slider-row" style="margin-bottom:0"><label>页边距</label><input type="range" id="slPad" min="60" max="140" value="100" oninput="setTypo()"><span id="lblPad">100%</span></div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">头像</div>
+      <div class="avatar-panel-wrap">
+        <div class="avatar-top">
+          <div class="avatar-preview" id="avatarPreview" onclick="document.getElementById('avatarInput').click()" title="点击上传">＋</div>
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text-mid);margin-bottom:6px">点击预览上传照片</div>
+            <div class="btn-row">
+              <button class="btn active" id="btnAvatarCircle" onclick="setAvatarShape('circle')">⬤ 圆</button>
+              <button class="btn" id="btnAvatarRect" onclick="setAvatarShape('rect')">▪ 方</button>
+            </div>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:5px">
+          <button class="btn" onclick="document.getElementById('avatarInput').click()" style="flex:1;justify-content:center">上传</button>
+          <button class="btn" id="btnCrop" onclick="openCrop()" style="display:none">✂ 裁剪</button>
+          <button class="btn" id="btnRemoveAvatar" onclick="removeAvatar()" style="display:none">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">区块管理</div>
+      <button class="btn btn-full" onclick="openAddBlock()" style="margin-bottom:5px">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>新增区块
+      </button>
+      <div style="font-size:10px;color:var(--text-light)">⠿ 拖动区块左侧手柄可重新排序</div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">开发者工具</div>
+      <div class="btn-row">
+        <button class="btn" onclick="openJSON('export')" style="flex:1;justify-content:center">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>导出 JSON
+        </button>
+        <button class="btn" onclick="openJSON('import')" style="flex:1;justify-content:center">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 8V1M3 4l3-3 3 3M1 10h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>导入 JSON
+        </button>
+      </div>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">导出 PDF</div>
+      <select class="styled-select" id="paperSizeSelect" onchange="onPaperChange(this.value)" style="margin-bottom:7px">
+        <option value="A4">A4（210×297 mm）</option>
+        <option value="A3">A3（297×420 mm）</option>
+        <option value="A5">A5（148×210 mm）</option>
+        <option value="Letter">Letter（216×279 mm）</option>
+        <option value="Legal">Legal（216×356 mm）</option>
+        <option value="B4">B4（250×353 mm）</option>
+        <option value="B5">B5（176×250 mm）</option>
+        <option value="custom">✏ 自定义尺寸…</option>
+      </select>
+      <button class="btn btn-full" id="btnPdf" onclick="downloadPDF()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1h6l3 3v7H1z" stroke="currentColor" stroke-width="1.3"/><path d="M7 1v3h3M6 6v4M4 8l2 2 2-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>下载 PDF
+      </button>
+    </div>
+
+    <div class="pg">
+      <div class="pg-title">草稿</div>
+      <div class="btn-row">
+        <button class="btn" onclick="saveDraft(true)" style="flex:1;justify-content:center">💾 保存</button>
+        <button class="btn" onclick="clearDraft()">🗑</button>
+      </div>
+      <div class="draft-status" id="draftStatus"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CROP -->
+<div class="modal-bg" id="cropModal">
+  <div class="modal">
+    <div class="modal-head"><h3>裁剪头像</h3><button class="modal-close" onclick="closeCrop()">×</button></div>
+    <div class="modal-body">
+      <div class="crop-container" id="cropContainer">
+        <img class="crop-img" id="cropImg" draggable="false">
+        <canvas class="crop-mask" id="cropMask"></canvas>
+      </div>
+      <p class="crop-hint">拖动图片调整位置 · 滚轮缩放</p>
+      <div class="crop-zoom-row">
+        <span>缩小</span>
+        <input type="range" id="cropZoom" min="50" max="300" value="100" oninput="setCropZoom(this.value)">
+        <span>放大</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeCrop()">取消</button>
+      <button class="btn active" onclick="confirmCrop()">确认裁剪</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BLOCK -->
+<div class="modal-bg" id="addBlockModal">
+  <div class="modal">
+    <div class="modal-head"><h3>新增区块</h3><button class="modal-close" onclick="closeAddBlock()">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:11.5px;color:var(--text-mid);margin-bottom:10px">选择区块类型：</div>
+      <div class="block-type-grid" id="blockTypeGrid"></div>
+      <div style="font-size:11.5px;color:var(--text-mid);margin:12px 0 7px">添加位置：</div>
+      <div class="block-target-row">
+        <button class="block-target-btn sel" id="targetMain" onclick="selectTarget('main')">📄 主内容区</button>
+        <button class="block-target-btn" id="targetSidebar" onclick="selectTarget('sidebar')">📋 侧边栏</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeAddBlock()">取消</button>
+      <button class="btn active" onclick="confirmAddBlock()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM PAPER -->
+<div class="modal-bg" id="paperModal">
+  <div class="modal">
+    <div class="modal-head"><h3>自定义纸张</h3><button class="modal-close" onclick="closePaperModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field-row"><label>宽度</label><input id="customW" type="number" value="210" min="50" max="1200"><span>mm</span></div>
+      <div class="field-row" style="margin-bottom:0"><label>高度</label><input id="customH" type="number" value="297" min="50" max="1200"><span>mm</span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closePaperModal()">取消</button>
+      <button class="btn active" onclick="confirmCustomSize()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSON -->
+<div class="modal-bg" id="jsonModal">
+  <div class="modal">
+    <div class="modal-head"><h3>JSON 数据</h3><button class="modal-close" onclick="closeJSON()">×</button></div>
+    <div class="modal-body">
+      <div class="json-tabs">
+        <button class="json-tab active" id="tabExport" onclick="switchJsonTab('export')">导出</button>
+        <button class="json-tab" id="tabImport" onclick="switchJsonTab('import')">导入</button>
+      </div>
+      <div id="jsonExportPane">
+        <div style="font-size:11.5px;color:var(--text-mid);margin-bottom:8px">导出为 JSON Resume 标准格式，便于版本管理</div>
+        <textarea class="json-textarea" id="jsonExportText" readonly></textarea>
+        <div class="btn-row" style="margin-top:10px">
+          <button class="btn" onclick="copyJSON()">📋 复制</button>
+          <button class="btn" onclick="downloadJSON()">💾 下载 .json</button>
+          <button class="btn" onclick="document.getElementById('jsonFileInput').click()">📂 从文件导入</button>
+        </div>
+      </div>
+      <div id="jsonImportPane" style="display:none">
+        <div style="font-size:11.5px;color:var(--text-mid);margin-bottom:8px">粘贴 JSON Resume 数据，将覆盖当前内容</div>
+        <textarea class="json-textarea" id="jsonImportText" placeholder='{"basics":{"name":"Your Name","label":"Engineer"},...}'></textarea>
+        <div style="font-size:10.5px;color:#e67e22;margin-top:6px">⚠ 导入将覆盖当前内容，建议先导出备份</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeJSON()">关闭</button>
+      <button class="btn active" id="jsonConfirmBtn" onclick="importJSON()" style="display:none">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<div id="pdfOverlay"><div class="pdf-spinner"></div><span>正在生成 PDF，请稍候…</span></div>
+
+<div id="draftBanner">
+  <span>📝 检测到草稿，是否恢复？</span>
+  <div style="display:flex;gap:6px">
+    <button class="db-yes" onclick="restoreDraft()">恢复</button>
+    <button class="db-no" onclick="dismissBanner()">忽略</button>
+  </div>
+</div>
+
+<div class="icon-picker" id="iconPicker"></div>
+
+<input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(event)" style="display:none">
+<input type="file" id="jsonFileInput" accept=".json,application/json" onchange="loadJSONFile(event)" style="display:none">
+
+<div class="canvas">
+  <div class="canvas-inner" id="canvasInner">
+    <div class="resume portrait" id="resume"></div>
+    <div class="page-break-overlay" id="pageBreakOverlay" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const PRESETS=['#2c6e8a','#c0392b','#27ae60','#8e44ad','#d35400','#16a085','#2c3e50','#9b6b2f'];
+let currentLayout='portrait',currentColor='#2c6e8a',currentFont='serif-cn',currentLang='zh';
+let avatarSrc=null,rawAvatarSrc=null,avatarShape='circle';
+let paperSize='A4',customPaper=null;
+let blockTarget='main',selectedBlockType=null,showPageBreak=false;
+
+const FONTS={
+  'serif-cn':{css:"'Noto Serif SC',serif"},
+  'sans-cn':{css:"'Noto Sans SC',sans-serif"},
+  'xiaowei':{css:"'ZCOOL XiaoWei',serif"},
+  'source-serif':{css:"'Source Serif 4',serif"},
+  'lora':{css:"'Lora',serif"},
+  'garamond':{css:"'EB Garamond',serif"},
+  'inter':{css:"'Inter',sans-serif"},
+};
+
+const PAPER_SIZES={
+  'A4':{w:210,h:297},'A3':{w:297,h:420},'A5':{w:148,h:210},
+  'Letter':{w:215.9,h:279.4},'Legal':{w:215.9,h:355.6},
+  'B4':{w:250,h:353},'B5':{w:176,h:250},
+};
+
+// ── LANGUAGE (titles only, never reset user content) ──
+const LANG_TITLES={
+  zh:{secContact:'联系方式',secSkills:'专业技能',secTools:'工具 & 软件',secLangs:'语言能力',secAbout:'个人简介',secWork:'工作经历',secEdu:'教育背景',addWork:'添加工作经历',addEdu:'添加教育经历',addSkill:'添加技能',addLang:'添加语言',addTag:'添加标签',font:'serif-cn'},
+  en:{secContact:'Contact',secSkills:'Core Skills',secTools:'Tools & Software',secLangs:'Languages',secAbout:'Profile',secWork:'Work Experience',secEdu:'Education',addWork:'Add Experience',addEdu:'Add Education',addSkill:'Add Skill',addLang:'Add Language',addTag:'Add Tag',font:'source-serif'},
+  fr:{secContact:'Coordonnées',secSkills:'Compétences',secTools:'Outils & Logiciels',secLangs:'Langues',secAbout:'Profil',secWork:'Expérience',secEdu:'Formation',addWork:'Ajouter',addEdu:'Ajouter',addSkill:'Ajouter',addLang:'Ajouter',addTag:'Ajouter',font:'garamond'},
+  ja:{secContact:'連絡先',secSkills:'スキル',secTools:'ツール',secLangs:'語学力',secAbout:'プロフィール',secWork:'職務経歴',secEdu:'学歴',addWork:'追加',addEdu:'追加',addSkill:'追加',addLang:'追加',addTag:'追加',font:'sans-cn'},
+  de:{secContact:'Kontakt',secSkills:'Kenntnisse',secTools:'Tools',secLangs:'Sprachen',secAbout:'Profil',secWork:'Berufserfahrung',secEdu:'Ausbildung',addWork:'Hinzufügen',addEdu:'Hinzufügen',addSkill:'Hinzufügen',addLang:'Hinzufügen',addTag:'Hinzufügen',font:'lora'},
+  ko:{secContact:'연락처',secSkills:'핵심 역량',secTools:'툴 & 소프트웨어',secLangs:'언어',secAbout:'자기소개',secWork:'경력',secEdu:'학력',addWork:'추가',addEdu:'추가',addSkill:'추가',addLang:'추가',addTag:'추가',font:'sans-cn'},
+};
+let T=LANG_TITLES.zh;
+
+function applyTemplate(lang){
+  currentLang=lang; T=LANG_TITLES[lang]||LANG_TITLES.zh;
+  // Update only section-title elements with data-sec and add-btn elements
+  document.querySelectorAll('[data-sec]').forEach(el=>{ if(T[el.dataset.sec]) el.textContent=T[el.dataset.sec]; });
+  document.querySelectorAll('[data-addbtn]').forEach(el=>{ if(T[el.dataset.addbtn]) el.textContent='＋ '+T[el.dataset.addbtn]; });
+  if(T.font&&T.font!==currentFont){ currentFont=T.font; document.getElementById('fontSelect').value=currentFont; applyFont(); }
+  scheduleSnapshot(); scheduleAutosave();
+}
+
+// ── UNDO/REDO ──
+let undoStack=[],redoStack=[],snapLocked=false,snapTimer=null;
+function takeSnapshot(){ if(snapLocked) return; const h=document.getElementById('resume').innerHTML; if(undoStack.length&&undoStack[undoStack.length-1]===h) return; undoStack.push(h); if(undoStack.length>60) undoStack.shift(); redoStack=[]; updateUndoBtns(); }
+function scheduleSnapshot(){ clearTimeout(snapTimer); snapTimer=setTimeout(takeSnapshot,800); }
+function undo(){ if(undoStack.length<2) return; redoStack.push(undoStack.pop()); restoreSnap(undoStack[undoStack.length-1]); }
+function redo(){ if(!redoStack.length) return; const h=redoStack.pop(); undoStack.push(h); restoreSnap(h); }
+function restoreSnap(html){ snapLocked=true; const el=document.getElementById('resume'); el.innerHTML=html; el.querySelectorAll('.skill-item').forEach(syncSkillBar); initSortable(); drawPageBreaks(); snapLocked=false; updateUndoBtns(); }
+function updateUndoBtns(){ document.getElementById('btnUndo').disabled=undoStack.length<2; document.getElementById('btnRedo').disabled=!redoStack.length; document.getElementById('undoCount').textContent=undoStack.length>1?`${undoStack.length-1}步`:''; }
+document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){ if(document.activeElement.contentEditable==='true') return; e.preventDefault(); undo(); } if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){ e.preventDefault(); redo(); } });
+
+// ── DRAFT ──
+const DRAFT_KEY='resume_draft_v5';
+let draftTimer=null;
+function saveDraft(manual=false){
+  try{ localStorage.setItem(DRAFT_KEY,JSON.stringify({layout:currentLayout,color:currentColor,font:currentFont,lang:currentLang,avatarSrc,rawAvatarSrc,avatarShape,lh:document.getElementById('slLH').value,ls:document.getElementById('slLS').value,pad:document.getElementById('slPad').value,html:document.getElementById('resume').innerHTML,ts:Date.now()}));
+    const el=document.getElementById('draftStatus'); el.textContent=`✓ ${manual?'已保存':'自动保存'} ${new Date().toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})}`; el.className='draft-status saved'; setTimeout(()=>el.className='draft-status',3000);
+  }catch(e){}
+}
+function clearDraft(){ localStorage.removeItem(DRAFT_KEY); document.getElementById('draftStatus').textContent='已清除'; }
+function scheduleAutosave(){ clearTimeout(draftTimer); draftTimer=setTimeout(()=>saveDraft(false),4000); }
+function restoreDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem(DRAFT_KEY)); if(!d) return;
+    snapLocked=true;
+    currentLayout=d.layout; currentColor=d.color; currentFont=d.font||'serif-cn'; currentLang=d.lang||'zh';
+    avatarSrc=d.avatarSrc; rawAvatarSrc=d.rawAvatarSrc||d.avatarSrc; avatarShape=d.avatarShape||'circle';
+    T=LANG_TITLES[currentLang]||LANG_TITLES.zh;
+    document.getElementById('langSelect').value=currentLang;
+    document.getElementById('fontSelect').value=currentFont;
+    if(d.lh){ document.getElementById('slLH').value=d.lh; document.getElementById('slLS').value=d.ls||0; document.getElementById('slPad').value=d.pad||100; setTypo(); }
+    applyFont(); setColor(d.color,false); setLayout(d.layout,false);
+    updateAvatarPreview();
+    document.getElementById('btnCrop').style.display=avatarSrc?'':'none';
+    document.getElementById('btnRemoveAvatar').style.display=avatarSrc?'':'none';
+    document.getElementById('resume').innerHTML=d.html;
+    document.getElementById('resume').querySelectorAll('.skill-item').forEach(syncSkillBar);
+    initSortable(); snapLocked=false; takeSnapshot(); dismissBanner();
+  }catch(e){console.error(e);}
+}
+function dismissBanner(){ document.getElementById('draftBanner').classList.remove('show'); }
+
+// ── COLOR ──
+function hexToRgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)}}
+function lighten(h,a=.88){const{r,g,b}=hexToRgb(h);const m=v=>Math.round(v+(255-v)*a);return`rgb(${m(r)},${m(g)},${m(b)})`}
+function midTone(h,a=.45){const{r,g,b}=hexToRgb(h);const m=v=>Math.round(v+(255-v)*a);return`rgb(${m(r)},${m(g)},${m(b)})`}
+function buildPresets(){ const w=document.getElementById('presets'); w.innerHTML=''; PRESETS.forEach(c=>{const d=document.createElement('div');d.className='preset-dot'+(c===currentColor?' selected':'');d.style.background=c;d.onclick=()=>setColor(c);w.appendChild(d);}); }
+function setColor(hex,rerender=true){ currentColor=hex; document.getElementById('colorPicker').value=hex; document.getElementById('colorHex').textContent=hex; const s=document.documentElement.style; s.setProperty('--accent',hex);s.setProperty('--accent-light',lighten(hex,.88));s.setProperty('--accent-mid',midTone(hex,.45)); buildPresets(); if(rerender){renderResume();scheduleAutosave();} }
+document.getElementById('colorPicker').addEventListener('input',e=>setColor(e.target.value));
+
+// ── FONT & TYPO ──
+function setFont(key){ currentFont=key; applyFont(); scheduleAutosave(); }
+function applyFont(){ const css=FONTS[currentFont]?.css||FONTS['serif-cn'].css; document.getElementById('resume').style.fontFamily=css; }
+function setTypo(){
+  const lh=parseInt(document.getElementById('slLH').value)/100;
+  const ls=parseInt(document.getElementById('slLS').value)/1000;
+  const pad=parseInt(document.getElementById('slPad').value)/100;
+  document.getElementById('lblLH').textContent=lh.toFixed(2);
+  document.getElementById('lblLS').textContent=ls===0?'0em':ls.toFixed(3).replace(/0+$/,'')+'em';
+  document.getElementById('lblPad').textContent=Math.round(pad*100)+'%';
+  const s=document.documentElement.style;
+  s.setProperty('--resume-lh',lh);
+  s.setProperty('--resume-ls',ls+'em');
+  s.setProperty('--resume-pad',pad);
+  scheduleAutosave();
+}
+
+// ── AVATAR ──
+function uploadAvatar(e){
+  const f=e.target.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
+  const img=new Image();
+  img.onload=()=>{
+    const cvs=document.createElement('canvas'); cvs.width=img.width; cvs.height=img.height;
+    const ctx=cvs.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high'; ctx.drawImage(img,0,0);
+    rawAvatarSrc=cvs.toDataURL('image/png'); avatarSrc=rawAvatarSrc;
+    URL.revokeObjectURL(url); updateAvatarPreview();
+    document.getElementById('btnCrop').style.display=''; document.getElementById('btnRemoveAvatar').style.display='';
+    renderResume(); scheduleAutosave();
+  };
+  img.src=url; e.target.value='';
+}
+function removeAvatar(){ avatarSrc=null; rawAvatarSrc=null; updateAvatarPreview(); document.getElementById('btnCrop').style.display='none'; document.getElementById('btnRemoveAvatar').style.display='none'; renderResume(); scheduleAutosave(); }
+function updateAvatarPreview(){ const p=document.getElementById('avatarPreview'); if(avatarSrc){p.style.backgroundImage=`url('${avatarSrc}')`;p.style.borderRadius=avatarShape==='circle'?'50%':'16px';p.textContent='';p.classList.add('has-img');}else{p.style.backgroundImage='';p.textContent='＋';p.classList.remove('has-img');} }
+function setAvatarShape(s){ avatarShape=s; document.getElementById('btnAvatarCircle').classList.toggle('active',s==='circle'); document.getElementById('btnAvatarRect').classList.toggle('active',s==='rect'); updateAvatarPreview(); renderResume(); scheduleAutosave(); }
+function avatarHTML(){ if(!avatarSrc) return ''; const r=avatarShape==='circle'?'50%':'10px'; return`<div class="avatar-wrap"><div class="avatar-ring" style="border-radius:${r};background-image:url('${avatarSrc}');" onclick="document.getElementById('avatarInput').click()"></div><div class="avatar-edit-btn no-export" onclick="document.getElementById('avatarInput').click()">✎</div></div>`; }
+
+// ── CROP (uses rawAvatarSrc always) ──
+let cropState={x:0,y:0,zoom:100,dragging:false,startX:0,startY:0,startImgX:0,startImgY:0};
+function openCrop(){
+  if(!rawAvatarSrc) return;
+  const img=document.getElementById('cropImg');
+  img.src=rawAvatarSrc; // ALWAYS raw, not previously cropped
+  cropState={x:0,y:0,zoom:100,dragging:false};
+  img.onload=()=>{ centerCrop(); drawCropMask(); };
+  document.getElementById('cropModal').classList.add('show');
+}
+function closeCrop(){ document.getElementById('cropModal').classList.remove('show'); }
+function centerCrop(){
+  const con=document.getElementById('cropContainer'),img=document.getElementById('cropImg');
+  const cw=con.clientWidth,ch=con.clientHeight,cropSize=Math.min(cw,ch)*0.78;
+  const minScale=Math.max(cropSize/img.naturalWidth,cropSize/img.naturalHeight);
+  const minZoom=Math.ceil(minScale*100);
+  const slider=document.getElementById('cropZoom');
+  slider.min=minZoom; slider.max=Math.max(300,minZoom*3); slider.value=minZoom;
+  cropState.zoom=minZoom;
+  cropState.x=(cw-img.naturalWidth*minScale)/2; cropState.y=(ch-img.naturalHeight*minScale)/2;
+  updateCropImgPos();
+}
+function updateCropImgPos(){ const img=document.getElementById('cropImg'); const s=cropState.zoom/100; img.style.transform=`translate(${cropState.x}px,${cropState.y}px) scale(${s})`; }
+function drawCropMask(){
+  const canvas=document.getElementById('cropMask'),con=document.getElementById('cropContainer');
+  const cw=con.clientWidth,ch=con.clientHeight; canvas.width=cw; canvas.height=ch;
+  const ctx=canvas.getContext('2d');
+  const size=Math.min(cw,ch)*0.78,cx=cw/2,cy=ch/2;
+  ctx.fillStyle='rgba(0,0,0,0.58)'; ctx.fillRect(0,0,cw,ch);
+  ctx.globalCompositeOperation='destination-out'; ctx.beginPath();
+  if(avatarShape==='circle'){ctx.arc(cx,cy,size/2,0,Math.PI*2);}
+  else{const r=12,x=cx-size/2,y=cy-size/2;ctx.moveTo(x+r,y);ctx.lineTo(x+size-r,y);ctx.arcTo(x+size,y,x+size,y+r,r);ctx.lineTo(x+size,y+size-r);ctx.arcTo(x+size,y+size,x+size-r,y+size,r);ctx.lineTo(x+r,y+size);ctx.arcTo(x,y+size,x,y+size-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+  ctx.fill();
+  ctx.globalCompositeOperation='source-over'; ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=2; ctx.beginPath();
+  if(avatarShape==='circle'){ctx.arc(cx,cy,size/2,0,Math.PI*2);}
+  else{const r=12,x=cx-size/2,y=cy-size/2;ctx.moveTo(x+r,y);ctx.lineTo(x+size-r,y);ctx.arcTo(x+size,y,x+size,y+r,r);ctx.lineTo(x+size,y+size-r);ctx.arcTo(x+size,y+size,x+size-r,y+size,r);ctx.lineTo(x+r,y+size);ctx.arcTo(x,y+size,x,y+size-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+  ctx.stroke();
+}
+function setCropZoom(val){
+  const slider=document.getElementById('cropZoom'),minZoom=parseInt(slider.min)||50;
+  const con=document.getElementById('cropContainer'),cw=con.clientWidth,ch=con.clientHeight;
+  const prev=cropState.zoom/100; cropState.zoom=Math.max(minZoom,parseInt(val)); const next=cropState.zoom/100;
+  cropState.x=cw/2-(cw/2-cropState.x)*(next/prev); cropState.y=ch/2-(ch/2-cropState.y)*(next/prev);
+  updateCropImgPos();
+}
+document.getElementById('cropContainer').addEventListener('mousedown',e=>{cropState.dragging=true;cropState.startX=e.clientX;cropState.startY=e.clientY;cropState.startImgX=cropState.x;cropState.startImgY=cropState.y;});
+document.addEventListener('mousemove',e=>{if(!cropState.dragging) return; cropState.x=cropState.startImgX+(e.clientX-cropState.startX);cropState.y=cropState.startImgY+(e.clientY-cropState.startY);updateCropImgPos();});
+document.addEventListener('mouseup',()=>{cropState.dragging=false;});
+document.getElementById('cropContainer').addEventListener('wheel',e=>{e.preventDefault();const nz=Math.min(parseInt(document.getElementById('cropZoom').max),Math.max(parseInt(document.getElementById('cropZoom').min),cropState.zoom+(e.deltaY>0?-5:5)));document.getElementById('cropZoom').value=nz;setCropZoom(nz);},{passive:false});
+function confirmCrop(){
+  const con=document.getElementById('cropContainer'),img=document.getElementById('cropImg');
+  const cw=con.clientWidth,ch=con.clientHeight,size=Math.min(cw,ch)*0.78;
+  const cx=cw/2,cy=ch/2,x0=cx-size/2,y0=cy-size/2;
+  const scale=cropState.zoom/100,sx=(x0-cropState.x)/scale,sy=(y0-cropState.y)/scale,sSize=size/scale;
+  const OUT=400,out=document.createElement('canvas'); out.width=OUT; out.height=OUT;
+  const ctx=out.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  if(avatarShape==='circle'){ctx.beginPath();ctx.arc(OUT/2,OUT/2,OUT/2,0,Math.PI*2);ctx.clip();}
+  else{const r=40;ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(OUT-r,0);ctx.arcTo(OUT,0,OUT,r,r);ctx.lineTo(OUT,OUT-r);ctx.arcTo(OUT,OUT,OUT-r,OUT,r);ctx.lineTo(r,OUT);ctx.arcTo(0,OUT,0,OUT-r,r);ctx.lineTo(0,r);ctx.arcTo(0,0,r,0,r);ctx.closePath();ctx.clip();}
+  ctx.drawImage(img,sx,sy,sSize,sSize,0,0,OUT,OUT);
+  avatarSrc=out.toDataURL('image/png'); // rawAvatarSrc stays intact
+  updateAvatarPreview(); renderResume(); scheduleAutosave(); closeCrop();
+}
+
+// ── LAYOUT & PAGE BREAK ──
+function setLayout(l,rerender=true){ currentLayout=l; document.getElementById('btnPortrait').classList.toggle('active',l==='portrait'); document.getElementById('btnLandscape').classList.toggle('active',l==='landscape'); if(rerender){renderResume();scheduleAutosave();} }
+function togglePageBreak(){ showPageBreak=!showPageBreak; document.getElementById('btnPageBreak').classList.toggle('active',showPageBreak); drawPageBreaks(); }
+function drawPageBreaks(){
+  const overlay=document.getElementById('pageBreakOverlay');
+  overlay.style.display=showPageBreak?'block':'none';
+  if(!showPageBreak){overlay.innerHTML='';return;}
+  const resumeEl=document.getElementById('resume');
+  const totalH=resumeEl.scrollHeight,totalW=resumeEl.scrollWidth;
+  const paper=PAPER_SIZES[paperSize]||PAPER_SIZES['A4'];
+  const isLS=currentLayout==='landscape';
+  const pxPerMm=totalW/(isLS?paper.h:paper.w);
+  const pageHpx=(isLS?paper.w:paper.h)*pxPerMm;
+  overlay.innerHTML=''; let y=pageHpx,pg=2;
+  while(y<totalH){
+    const line=document.createElement('div'); line.className='page-break-line'; line.style.top=y+'px';
+    line.innerHTML=`<span class="page-break-label">— 第 ${pg} 页 —</span>`;
+    overlay.appendChild(line); y+=pageHpx; pg++;
+  }
+}
+
+// ── DRAG & DROP (Sortable.js) ──
+let _sortables=[];
+function initSortable(){
+  _sortables.forEach(s=>s.destroy()); _sortables=[];
+  document.querySelectorAll('#resume .main, #resume .sidebar').forEach(container=>{
+    _sortables.push(new Sortable(container,{animation:180,ghostClass:'sortable-ghost',handle:'.drag-handle',filter:'.no-export,.add-row',preventOnFilter:false,onEnd:()=>{scheduleSnapshot();scheduleAutosave();drawPageBreaks();}}));
+  });
+}
+
+// ── ICON PICKER ──
+const ICONS_SVG_MAP={
+  phone:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  email:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+  location:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  website:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 1 0 20 14.5 14.5 0 0 1 0-20M2 12h20"/></svg>`,
+  github:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S9.06 17.28 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>`,
+  linkedin:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>`,
+  twitter:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>`,
+  link:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
+  code:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+  book:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  star:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  briefcase:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+};
+let _activeIconBtn=null;
+function openIconPicker(ciIconEl,event){
+  if(event) event.stopPropagation();
+  const picker=document.getElementById('iconPicker');
+  if(_activeIconBtn===ciIconEl&&picker.classList.contains('show')){closeIconPicker();return;}
+  _activeIconBtn=ciIconEl;
+  picker.innerHTML=Object.entries(ICONS_SVG_MAP).map(([k,svg])=>`<button class="icon-opt" title="${k}" onclick="setContactIcon(this,'${k}')">${svg}</button>`).join('');
+  const rect=ciIconEl.getBoundingClientRect();
+  picker.style.top=(rect.bottom+window.scrollY+6)+'px';
+  picker.style.left=Math.max(var_panel()+4,rect.left+window.scrollX-80)+'px';
+  picker.classList.add('show');
+}
+function var_panel(){ return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--panel'))||0; }
+function closeIconPicker(){ document.getElementById('iconPicker').classList.remove('show'); _activeIconBtn=null; }
+function setContactIcon(optBtn,key){ if(!_activeIconBtn) return; _activeIconBtn.innerHTML=ICONS_SVG_MAP[key]; closeIconPicker(); scheduleSnapshot(); scheduleAutosave(); }
+document.addEventListener('click',e=>{ if(!e.target.closest('#iconPicker')&&!e.target.closest('.ci-icon')) closeIconPicker(); });
+
+// ── JSON EXPORT / IMPORT ──
+function openJSON(mode='export'){ switchJsonTab(mode); if(mode==='export') generateJSONExport(); document.getElementById('jsonModal').classList.add('show'); }
+function closeJSON(){ document.getElementById('jsonModal').classList.remove('show'); }
+function switchJsonTab(tab){ document.getElementById('tabExport').classList.toggle('active',tab==='export'); document.getElementById('tabImport').classList.toggle('active',tab==='import'); document.getElementById('jsonExportPane').style.display=tab==='export'?'':'none'; document.getElementById('jsonImportPane').style.display=tab==='import'?'':'none'; document.getElementById('jsonConfirmBtn').style.display=tab==='import'?'':'none'; if(tab==='export') generateJSONExport(); }
+function getT(sel){ const el=document.querySelector(sel); return el?el.textContent.trim():''; }
+function generateJSONExport(){
+  const basics={name:getT('#resume .name'),label:getT('#resume .role'),email:getT('#resume .contact-item:nth-child(2) span'),phone:getT('#resume .contact-item:nth-child(1) span'),url:getT('#resume .contact-item:nth-child(4) span'),location:{address:getT('#resume .contact-item:nth-child(3) span')},summary:getT('#resume .profile-text')};
+  const work=[]; document.querySelectorAll('#resume #work-timeline .tl-entry').forEach(e=>{ work.push({position:e.querySelector('.tl-title')?.textContent.trim()||'',company:e.querySelector('.tl-company')?.textContent.trim()||'',startDate:(e.querySelector('.tl-date')?.textContent.trim()||'').split('—')[0]?.trim()||'',endDate:(e.querySelector('.tl-date')?.textContent.trim()||'').split('—')[1]?.trim()||'',highlights:[...e.querySelectorAll('.tl-desc li')].map(li=>li.textContent.trim())}); });
+  const education=[]; document.querySelectorAll('#resume #edu-timeline .tl-entry').forEach(e=>{ education.push({studyType:e.querySelector('.tl-title')?.textContent.trim()||'',institution:e.querySelector('.tl-company')?.textContent.trim()||'',startDate:(e.querySelector('.tl-date')?.textContent.trim()||'').split('—')[0]?.trim()||'',endDate:(e.querySelector('.tl-date')?.textContent.trim()||'').split('—')[1]?.trim()||''}); });
+  const skills=[]; document.querySelectorAll('#resume #skills-container .skill-item').forEach(i=>{ skills.push({name:i.querySelector('[contenteditable]')?.textContent.trim()||'',level:parseInt(i.querySelector('.pct-val')?.textContent.trim()||'0')}); });
+  const languages=[]; document.querySelectorAll('#resume #lang-container .skill-item').forEach(i=>{ languages.push({language:i.querySelector('[contenteditable]')?.textContent.trim()||'',fluency:parseInt(i.querySelector('.pct-val')?.textContent.trim()||'0')+'%'}); });
+  document.getElementById('jsonExportText').value=JSON.stringify({$schema:'https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json',basics,work,education,skills,languages,meta:{theme:'resume-editor-pro',exportedAt:new Date().toISOString()}},null,2);
+}
+function copyJSON(){ const ta=document.getElementById('jsonExportText'); ta.select(); document.execCommand('copy'); }
+function downloadJSON(){ const blob=new Blob([document.getElementById('jsonExportText').value],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='resume.json'; a.click(); }
+function loadJSONFile(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{switchJsonTab('import');document.getElementById('jsonImportText').value=ev.target.result;openJSON('import');}; r.readAsText(f); e.target.value=''; }
+function importJSON(){
+  try{
+    const d=JSON.parse(document.getElementById('jsonImportText').value.trim());
+    const b=d.basics||{};
+    const n=document.querySelector('#resume .name'); if(n) n.textContent=b.name||'';
+    const ro=document.querySelector('#resume .role'); if(ro) ro.textContent=b.label||'';
+    const ab=document.querySelector('#resume .profile-text'); if(ab) ab.textContent=b.summary||'';
+    const cis=document.querySelectorAll('#resume .contact-item span');
+    if(cis[0]) cis[0].textContent=b.phone||'';
+    if(cis[1]) cis[1].textContent=b.email||'';
+    if(cis[2]) cis[2].textContent=b.location?.address||'';
+    if(cis[3]) cis[3].textContent=b.url||'';
+    const wtl=document.getElementById('work-timeline'); if(wtl&&d.work){wtl.innerHTML='';d.work.forEach(w=>{const tmp=document.createElement('div');tmp.innerHTML=tlEntryHTML(w.position||'',w.company||'',`${w.startDate||''} — ${w.endDate||''}`,w.highlights||[]);wtl.appendChild(tmp.firstElementChild);});}
+    const etl=document.getElementById('edu-timeline'); if(etl&&d.education){etl.innerHTML='';d.education.forEach(e=>{const tmp=document.createElement('div');tmp.innerHTML=tlEntryHTML(e.studyType||'',e.institution||'',`${e.startDate||''} — ${e.endDate||''}`,[]);etl.appendChild(tmp.firstElementChild);});}
+    scheduleSnapshot(); scheduleAutosave(); closeJSON();
+  }catch(e){alert('JSON 格式错误: '+e.message);}
+}
+
+// ── HTML HELPERS ──
+const ICONS_SVG={
+  phone:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5 19.79 19.79 0 0 1 1.61 5a2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  mail:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+  loc:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  web:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 1 0 20 14.5 14.5 0 0 1 0-20M2 12h20"/></svg>`,
+};
+function ed(tag,cls,txt){return`<${tag} class="${cls}" contenteditable="true" spellcheck="false">${txt}</${tag}>`;}
+function sT(text,secKey,isDel=false){
+  const sec=secKey?`data-sec="${secKey}"`:'';
+  const del=isDel?`<button class="section-del-btn no-export" onclick="this.closest('.section').remove();scheduleSnapshot();scheduleAutosave()">×</button>`:'';
+  return`<div class="section-title-row"><span class="drag-handle no-export">⠿</span><div class="section-title" contenteditable="true" spellcheck="false" ${sec}>${text}</div>${del}</div>`;
+}
+function ci(iconSvg,text,type='text'){return`<div class="contact-item" data-ci-type="${type}"><div class="ci-icon" onclick="openIconPicker(this,event)" title="点击换图标">${iconSvg}</div><span contenteditable="true" spellcheck="false">${text}</span><button class="ci-del no-export" onclick="this.closest('.contact-item').remove();scheduleSnapshot()">×</button></div>`;}
+function addBtn(label,fn,key=''){const dk=key?`data-addbtn="${key}"`:'';return`<div class="add-row no-export"><button class="add-btn" onclick="${fn}" ${dk}>＋ ${label}</button></div>`;}
+function skillBarHTML(name,pct){return`<div class="skill-item"><div class="skill-header"><span contenteditable="true" spellcheck="false">${name}</span><div class="skill-header-right"><span class="pct-val" contenteditable="true" spellcheck="false">${pct}</span><span>%</span><button class="skill-del no-export" onclick="this.closest('.skill-item').remove();scheduleSnapshot()">×</button></div></div><div class="skill-bar"><div class="skill-fill" style="width:${pct}%"></div></div></div>`;}
+function tlEntryHTML(title,company,date,bullets){const items=bullets.length?bullets.map(b=>`<li>${b}</li>`).join(''):'';return`<div class="tl-entry"><div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div><div class="tl-content"><button class="tl-del no-export" onclick="this.closest('.tl-entry').remove();scheduleSnapshot()">×</button><div class="tl-header">${ed('div','tl-title',title)}${ed('div','tl-date',date)}</div>${ed('div','tl-company',company)}<ul class="tl-desc" contenteditable="true" spellcheck="false">${items}</ul></div></div>`;}
+function syncSkillBar(item){const pct=item.querySelector('.pct-val'),fill=item.querySelector('.skill-fill');if(!pct||!fill) return;pct.addEventListener('input',()=>{const v=parseInt(pct.textContent)||0;fill.style.width=Math.min(100,Math.max(0,v))+'%';});}
+
+// ── ADD/MODIFY ENTRIES ──
+function addWorkEntry(){const tl=document.getElementById('work-timeline');if(!tl) return;const d=document.createElement('div');d.innerHTML=tlEntryHTML('职位名称','公司名称','开始 — 结束',['工作内容描述']);tl.appendChild(d.firstElementChild);scheduleSnapshot();}
+function addEduEntry(){const tl=document.getElementById('edu-timeline');if(!tl) return;const d=document.createElement('div');d.innerHTML=tlEntryHTML('学位 专业','学校名称','年份 — 年份',[]);tl.appendChild(d.firstElementChild);scheduleSnapshot();}
+function addSkill(cid){const c=document.getElementById(cid);if(!c) return;const row=c.querySelector('.add-row');const d=document.createElement('div');d.innerHTML=skillBarHTML('新技能',75);const item=d.firstElementChild;c.insertBefore(item,row||null);syncSkillBar(item);scheduleSnapshot();}
+function addTag(cid){const c=document.getElementById(cid);if(!c) return;const row=c.querySelector('.add-row');const span=document.createElement('span');span.className='tag';span.contentEditable='true';span.spellcheck=false;span.textContent='新标签';const del=document.createElement('button');del.className='tag-del no-export';del.textContent='×';del.onclick=()=>{span.remove();scheduleSnapshot();};span.appendChild(del);c.insertBefore(span,row||null);setTimeout(()=>{const r=document.createRange();r.selectNodeContents(span);r.collapse(true);const s=window.getSelection();s.removeAllRanges();s.addRange(r);},0);scheduleSnapshot();}
+function addContact(type){const list=document.getElementById('contact-list');if(!list) return;const defs={phone:'138-0000-0000',mail:'new@email.com',loc:'新地址',web:'website.com'};const d=document.createElement('div');d.innerHTML=ci(ICONS_SVG[type]||ICONS_SVG.web,defs[type]||'联系方式',type);list.appendChild(d.firstElementChild);scheduleSnapshot();}
+
+// ── ADD CUSTOM BLOCK ──
+const BLOCK_TYPES=[{id:'timeline',icon:'📅',name:'时间线',desc:'工作/教育/项目经历'},{id:'skills',icon:'📊',name:'技能条',desc:'带进度条的技能展示'},{id:'tags',icon:'🏷',name:'标签云',desc:'工具/语言/软件标签'},{id:'text',icon:'📝',name:'纯文本',desc:'自我评价/陈述'},{id:'awards',icon:'🏆',name:'获奖经历',desc:'证书/荣誉/奖项'},{id:'code',icon:'💻',name:'代码片段',desc:'Prism.js 语法高亮'},{id:'custom',icon:'✨',name:'空白区块',desc:'完全自定义'}];
+function openAddBlock(){const grid=document.getElementById('blockTypeGrid');grid.innerHTML=BLOCK_TYPES.map(bt=>`<button class="block-type-card${bt.id===selectedBlockType?' selected':''}" onclick="selectBlockType('${bt.id}',this)"><div class="btc-icon">${bt.icon}</div><div class="btc-name">${bt.name}</div><div class="btc-desc">${bt.desc}</div></button>`).join('');if(!selectedBlockType)selectBlockType('timeline',grid.firstElementChild);document.getElementById('addBlockModal').classList.add('show');}
+function closeAddBlock(){document.getElementById('addBlockModal').classList.remove('show');}
+function selectBlockType(id,btn){selectedBlockType=id;document.querySelectorAll('.block-type-card').forEach(c=>c.classList.remove('selected'));if(btn)btn.classList.add('selected');}
+function selectTarget(t){blockTarget=t;document.getElementById('targetMain').classList.toggle('sel',t==='main');document.getElementById('targetSidebar').classList.toggle('sel',t==='sidebar');}
+function confirmAddBlock(){
+  const bt=BLOCK_TYPES.find(b=>b.id===selectedBlockType);if(!bt) return;
+  const uid='blk'+(Date.now()%100000);
+  let html='';
+  if(bt.id==='timeline'){html=`<div class="section">${sT(bt.name,'',true)}<div class="timeline" id="${uid}">${tlEntryHTML('标题','机构名称','时间段',[])}</div><div class="add-row no-export"><button class="add-btn" onclick="(function(){const t=document.getElementById('${uid}');if(t){const d=document.createElement('div');d.innerHTML=tlEntryHTML('标题','机构','时间',[]);t.appendChild(d.firstElementChild);scheduleSnapshot();}})()">＋ 添加条目</button></div></div>`;}
+  else if(bt.id==='skills'){html=`<div class="section">${sT(bt.name,'',true)}<div id="${uid}">${skillBarHTML('技能名称',75)}<div class="add-row no-export"><button class="add-btn" onclick="addSkill('${uid}')">＋ 添加技能</button></div></div></div>`;}
+  else if(bt.id==='tags'){html=`<div class="section">${sT(bt.name,'',true)}<div class="tag-cloud" id="${uid}"><span class="tag" contenteditable="true" spellcheck="false">标签<button class="tag-del no-export" onclick="this.parentElement.remove()">×</button></span><div class="add-row no-export"><button class="add-btn" onclick="addTag('${uid}')">＋ 添加标签</button></div></div></div>`;}
+  else if(bt.id==='text'){html=`<div class="section">${sT(bt.name,'',true)}<div class="profile-text" contenteditable="true" spellcheck="false">在此填写内容…</div></div>`;}
+  else if(bt.id==='awards'){html=`<div class="section">${sT(bt.name,'',true)}<ul style="padding-left:16px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-mid);line-height:var(--resume-lh)" contenteditable="true" spellcheck="false"><li>奖项名称 — 颁发机构 · 年份</li></ul></div>`;}
+  else if(bt.id==='code'){html=`<div class="section">${sT(bt.name,'',true)}<div class="code-block-wrap"><select class="lang-select" onchange="this.nextElementSibling.querySelector('code').className='language-'+this.value;Prism.highlightElement(this.nextElementSibling.querySelector('code'))"><option value="javascript">JavaScript</option><option value="python">Python</option><option value="typescript">TypeScript</option><option value="bash">Bash</option></select><pre><code class="language-javascript">// 在此粘贴你的代码
+function example(arr) {
+  return arr.filter(x => x > 0).map(x => x * 2);
+}</code></pre></div></div>`;}
+  else{html=`<div class="section">${sT(bt.name,'',true)}<div contenteditable="true" spellcheck="false" style="font-size:13px;color:var(--text-mid);line-height:var(--resume-lh);min-height:36px">在此填写自定义内容…</div></div>`;}
+  const target=blockTarget==='main'?document.querySelector('#resume .main'):document.querySelector('#resume .sidebar');
+  if(!target){alert('请先确保简历已渲染');return;}
+  const tmp=document.createElement('div');tmp.innerHTML=html;
+  const sec=tmp.firstElementChild;
+  target.appendChild(sec);
+  sec.querySelectorAll('.skill-item').forEach(syncSkillBar);
+  if(bt.id==='code')Prism.highlightAllUnder(sec);
+  scheduleSnapshot();scheduleAutosave();closeAddBlock();drawPageBreaks();
+}
+
+// ── SIDEBAR & MAIN CONTENT ──
+function sidebarContent(){
+  return`
+<div class="section">${sT(T.secContact,'secContact')}
+  <div class="contact-list" id="contact-list">
+    ${ci(ICONS_SVG.phone,'138-0000-0000','phone')}
+    ${ci(ICONS_SVG.mail,'hello@example.com','mail')}
+    ${ci(ICONS_SVG.loc,'北京市朝阳区','loc')}
+    ${ci(ICONS_SVG.web,'portfolio.example.com','web')}
+  </div>
+  <div class="add-row no-export"><div class="ci-add-btns">
+    <button class="add-btn" onclick="addContact('phone')">＋ 电话</button>
+    <button class="add-btn" onclick="addContact('mail')">＋ 邮箱</button>
+    <button class="add-btn" onclick="addContact('loc')">＋ 地址</button>
+    <button class="add-btn" onclick="addContact('web')">＋ 网址</button>
+  </div></div>
+</div>
+<div class="section">${sT(T.secSkills,'secSkills')}
+  <div id="skills-container">
+    ${['产品设计,90','用户研究,85','原型制作,80','数据分析,70','前端开发,60'].map(s=>{const[n,p]=s.split(',');return skillBarHTML(n,p);}).join('')}
+    ${addBtn(T.addSkill,"addSkill('skills-container')",'addSkill')}
+  </div>
+</div>
+<div class="section">${sT(T.secTools,'secTools')}
+  <div class="tag-cloud" id="tags-container">
+    ${['Figma','Sketch','Axure','After Effects','Notion','Jira','Python','SQL'].map(t=>`<span class="tag" contenteditable="true" spellcheck="false">${t}<button class="tag-del no-export" onclick="this.parentElement.remove();scheduleSnapshot()">×</button></span>`).join('')}
+    ${addBtn(T.addTag,"addTag('tags-container')",'addTag')}
+  </div>
+</div>
+<div class="section">${sT(T.secLangs,'secLangs')}
+  <div id="lang-container">
+    ${skillBarHTML('普通话（母语）',100)}${skillBarHTML('英语（流利）',82)}${skillBarHTML('日语（基础）',40)}
+    ${addBtn(T.addLang,"addSkill('lang-container')",'addLang')}
+  </div>
+</div>`;
+}
+
+function mainContent(){
+  return`
+<div class="section">${sT(T.secAbout,'secAbout')}
+  <div class="profile-text" contenteditable="true" spellcheck="false">5 年产品设计经验，专注于以用户为中心的设计思维，曾主导多个从 0 到 1 的产品落地项目。擅长将复杂业务需求转化为简洁直观的用户体验，在高压环境下仍能保持创新思维与跨团队协作能力。</div>
+</div>
+<div class="section">${sT(T.secWork,'secWork')}
+  <div class="timeline" id="work-timeline">
+    ${tlEntryHTML('高级产品设计师','字节跳动 · 用户增长部','2022.03 — 至今',['主导抖音创作者中台 UX 重构，DAU 提升 18%','建立设计系统，将组件复用率从 40% 提升至 85%','跨部门协作推进 A/B 测试流程标准化，迭代周期缩短 30%'])}
+    ${tlEntryHTML('产品设计师','阿里巴巴 · 淘宝直播','2019.07 — 2022.02',['参与直播带货互动组件设计，单场峰值 GMV 突破亿元','独立完成商家端数据看板从调研到上线全流程'])}
+    ${tlEntryHTML('UI/UX 实习生','腾讯 · 微信事业群','2018.10 — 2019.06',['协助优化小程序开发者工具界面，收集并分析用户反馈'])}
+  </div>
+  ${addBtn(T.addWork,'addWorkEntry()','addWork')}
+</div>
+<div class="section">${sT(T.secEdu,'secEdu')}
+  <div class="timeline" id="edu-timeline">
+    ${tlEntryHTML('交互设计 硕士','同济大学 · 设计创意学院','2017 — 2019',[])}
+    ${tlEntryHTML('视觉传达 学士','中国美术学院','2013 — 2017',[])}
+  </div>
+  ${addBtn(T.addEdu,'addEduEntry()','addEdu')}
+</div>`;
+}
+
+// ── RENDER ──
+function renderResume(){
+  const el=document.getElementById('resume');
+  el.className=`resume ${currentLayout}`;
+  const av=avatarHTML();
+  if(currentLayout==='portrait'){
+    el.innerHTML=`<div class="sidebar">${av}<div class="name-block">${ed('div','name','陈思远')}${ed('div','role','Senior Product Designer')}</div>${sidebarContent()}</div><div class="main">${mainContent()}</div>`;
+  }else{
+    el.innerHTML=`<div class="header-band">${av}<div class="name-block">${ed('div','name','陈思远')}${ed('div','role','Senior Product Designer')}${ed('div','tagline','以用户为中心 · 5年+产品设计经验 · 北京')}</div></div><div class="body-grid"><div class="sidebar">${sidebarContent()}</div><div class="main">${mainContent()}</div></div>`;
+  }
+  el.querySelectorAll('.skill-item').forEach(syncSkillBar);
+  applyFont(); initSortable(); setupMutationObserver(); drawPageBreaks();
+}
+
+// ── MUTATION OBSERVER ──
+let _observer=null;
+function setupMutationObserver(){
+  if(_observer) _observer.disconnect();
+  _observer=new MutationObserver(()=>{scheduleSnapshot();scheduleAutosave();});
+  _observer.observe(document.getElementById('resume'),{childList:true,subtree:true,characterData:true,attributes:false});
+}
+
+// ── PAPER SIZE & PDF ──
+function onPaperChange(val){if(val==='custom'){document.getElementById('paperModal').classList.add('show');}else{paperSize=val;customPaper=null;drawPageBreaks();}}
+function closePaperModal(){document.getElementById('paperModal').classList.remove('show');document.getElementById('paperSizeSelect').value=customPaper?'custom':paperSize;}
+function confirmCustomSize(){const w=parseFloat(document.getElementById('customW').value),h=parseFloat(document.getElementById('customH').value);if(!w||!h||w<50||h<50){alert('请输入有效宽高（≥50mm）');return;}customPaper={w,h};paperSize='custom';document.getElementById('paperModal').classList.remove('show');drawPageBreaks();}
+async function downloadPDF(){
+  const btn=document.getElementById('btnPdf'),overlay=document.getElementById('pdfOverlay');
+  btn.disabled=true;overlay.classList.add('show');
+  document.querySelectorAll('.no-export').forEach(e=>e.style.visibility='hidden');
+  document.getElementById('pageBreakOverlay').style.display='none';
+  await new Promise(r=>setTimeout(r,160));
+  try{
+    const resumeEl=document.getElementById('resume');
+    const prev={r:resumeEl.style.borderRadius,s:resumeEl.style.boxShadow};
+    resumeEl.style.borderRadius='0';resumeEl.style.boxShadow='none';
+    const canvas=await html2canvas(resumeEl,{scale:4,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',scrollX:0,scrollY:-window.scrollY,width:resumeEl.scrollWidth,height:resumeEl.scrollHeight,windowWidth:resumeEl.scrollWidth,windowHeight:resumeEl.scrollHeight});
+    resumeEl.style.borderRadius=prev.r;resumeEl.style.boxShadow=prev.s;
+    const{jsPDF}=window.jspdf;
+    const isLS=currentLayout==='landscape';
+    let bW,bH;if(paperSize==='custom'&&customPaper){bW=customPaper.w;bH=customPaper.h;}else{const p=PAPER_SIZES[paperSize]||PAPER_SIZES['A4'];bW=p.w;bH=p.h;}
+    const pW=isLS?bH:bW,pH=isLS?bW:bH,cH=pW*(canvas.height/canvas.width);
+    const pdf=new jsPDF({orientation:isLS?'landscape':'portrait',unit:'mm',format:[pW,Math.max(cH,pH)]});
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pW,cH,undefined,'FAST');
+    pdf.save(`resume-${paperSize==='custom'?`${customPaper.w}x${customPaper.h}mm`:paperSize}.pdf`);
+  }catch(err){alert('PDF 生成失败：'+err.message);}
+  finally{document.querySelectorAll('.no-export').forEach(e=>e.style.visibility='');if(showPageBreak)document.getElementById('pageBreakOverlay').style.display='block';btn.disabled=false;overlay.classList.remove('show');}
+}
+
+// ── PWA ──
+(function setupPWA(){
+  const manifest={name:'简历编辑器 Pro',short_name:'简历编辑器',display:'standalone',background_color:'#eef1f6',theme_color:'#2c6e8a',start_url:'.',icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232c6e8a'/><text y='.9em' font-size='72' x='12'>✦</text></svg>",sizes:'any',type:'image/svg+xml'}]};
+  try{document.getElementById('manifestLink').href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/json'}));}catch(e){}
+  if('serviceWorker' in navigator){
+    const sw=`const C='rsm-v5';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.add('${location.href}'))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('${location.href}')))));`;
+    try{navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}catch(e){}
+  }
+})();
+
+// ── INIT ──
+buildPresets();
+setColor(currentColor,false);
+setAvatarShape('circle');
+renderResume();
+takeSnapshot();
+
+try{
+  const d=localStorage.getItem(DRAFT_KEY);
+  if(d){
+    const p=JSON.parse(d);
+    const mins=Math.round((Date.now()-p.ts)/60000);
+    const age=mins<1?'刚刚':mins<60?`${mins}分钟前`:`${Math.round(mins/60)}小时前`;
+    const b=document.getElementById('draftBanner');
+    b.querySelector('span').textContent=`📝 检测到 ${age} 的草稿，是否恢复？`;
+    b.classList.add('show');
+  }
+}catch(e){}
+</script>
+</body>
+</html>
